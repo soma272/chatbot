@@ -60,9 +60,7 @@ async function crawlAsync() {
 // 1분마다 크롤링 
 // cron.schedule("*/1 * * * *", async () => {
 //     console.log("running a task every 1 minute");
-//     await crawlAsync();
-//     // const lastId = await findLastId();
-    
+//     await crawlAsync();    
 // });
 
 
@@ -82,13 +80,15 @@ cron.schedule("*/1 * * * *", async () => {
     
     client.get('last_id', function(err, res){
         let lastId = res * 1;
+        console.log(lastId)
+
         let date = new Date();
         // date.setHours(date.getHours() - 1); // TODO: 실 서비스 시 주석 해제
         const currentKey = `mentorings:${date.getDate()}:${date.getHours()}`;
 
         client.get(currentKey, function (err, res) {
             let mentoringList = JSON.parse(res);
-            
+            console.log(mentoringList)
             if (mentoringList && mentoringList[0]["id"] * 1 != lastId) {
                 // 새로 올라온 멘토링 존재
                 console.log("=======new mentorings!========")

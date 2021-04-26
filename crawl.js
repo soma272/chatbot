@@ -75,7 +75,7 @@ exports.crawlMentoring = async function (lastId) {
                     } else if (j == 1) { // [제목] a태그만 필요한 정보를 담고 있음
                         map['title'] = $(this).find('a').text().trim();
                     } else if (j == 3) {    
-                        map['date'] = $(this).text().trim();
+                        map['date'] = new Date($(this).text().trim()).getTime() / 1000;
                     } else if (j == 4) {    
                         map['limit'] = $(this).text().trim();
                     } else if (j == 6) {    
