@@ -65,16 +65,23 @@ exports.crawlMentoring = async function () {
 
             /* 게시글 크롤링 후 map에 저장 */
             const getBoardTbody = $("tbody").find('tr').each(function (i, trElement) {
-                let map = new Map();
+                let map = {};
                 $(this).find('td').each(function (j, tdElement) {
-                    if (j == 1) {           // [제목] a태그만 필요한 정보를 담고 있음
-                        map.set(boardTitle[j], $(this).find('a').text().trim());
-                    } else if (j == 2) {    // [접수 기간] test 값이 다른 형식으로 입력되어있음
-                        map.set(boardTitle[j], $(this).text().replace(/\s/gi, ""));
-                    } else {
-                        map.set(boardTitle[j], $(this).text().trim());
-                    }
+                    // 0, 1, 3, 4, 6
+                    // id, 제목, 날짜, 인원, 작성자
+                    if (j == 0) {
+                        map['id'] = $(this).text().trim();
+                    } else if (j == 1) {           // [제목] a태그만 필요한 정보를 담고 있음
+                        map['title'] = $(this).find('a').text().trim();
+                    } else if (j == 3) {    
+                        map['date'] = $(this).text().trim();
+                    } else if (j == 4) {    
+                        map['limit'] = $(this).text().trim();
+                    } else if (j == 6) {    
+                        map['mentor'] = $(this).text().trim();
+                    } 
                 })
+                
                 boards[(pageIndex - 1) * 10 + i] = map;
             });
 
@@ -102,3 +109,4 @@ exports.crawlMentoring = async function () {
 }
 
 // module.exports = crawl;
+
