@@ -10,7 +10,7 @@ const somaPwd = Config.keys.swm.pwd;
 const boards = [];
 const boardTitle = [];
 
-exports.crawlMentoring = async function () {
+exports.crawlMentoring = async function (lastId) {
     try {
         const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
@@ -70,10 +70,9 @@ exports.crawlMentoring = async function () {
                 $(this).find('td').each(function (j, tdElement) {
                     // 0, 1, 3, 4, 6
                     // id, 제목, 날짜, 인원, 작성자
-
                     if (j == 0) {
                         map['id'] = $(this).text().trim();
-                    } else if (j == 1) {           // [제목] a태그만 필요한 정보를 담고 있음
+                    } else if (j == 1) { // [제목] a태그만 필요한 정보를 담고 있음
                         map['title'] = $(this).find('a').text().trim();
                     } else if (j == 3) {    
                         map['date'] = $(this).text().trim();
@@ -100,30 +99,24 @@ exports.crawlMentoring = async function () {
                 }),
             );
         }
-
         await browser.close();
 		
-		/*test_crawl의 결과
-		//레지스 값으로 불러올 last_id
-		last_id=450;
-		//last_id보다 큰 id 값 세기위한 count
-		let count=0;
-		
+		// lastId보다 큰 id 값 세기위한 count
+		let count = 0;
 		for (let board of boards) {
 			 let id=(Object.values(board))[0];
-			 //현재 id가 레지스 last_id 보다 작거나 같으면 loop 나감
-			 if(id<=last_id){
+			 //현재 id가 레지스 lastId 보다 작거나 같으면 loop 나감
+			 if(id<=lastId){
 				break;
 				}
 			//현재 id가 크다면 count 1증가
-			count+=1;
+			count += 1;
 		}
 		
-		//레지스에 저장된 last_id기준으로 큰 멘토링 글만 리턴
-        return boards.splice(0,count);
-		*/
-		
-        return boards;
+		// 레디스에 저장된 lastId기준으로 큰 멘토링 글만 리턴
+        return boards.splice(0, count);
+				
+        // return boards;
 
     } catch (error) {
         console.error(error);

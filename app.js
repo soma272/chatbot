@@ -33,11 +33,17 @@ app.use(function(req, res, next){
 
 app.use('/', index);
 
+// 첫 실행 시 마지막으로 크롤링된 값 초기 세팅
+client.set('last_id', 1);
 
 async function crawlAsync() {
-    const mentoringList = await crawlMentoring();
-    
-    // console.log(mentoringList[0]);
+    let lastId;
+    client.get('last_id', function (err, res) {
+        lastId = res * 1;
+    })
+
+    const mentoringList = await crawlMentoring(lastId);
+
     let date = new Date();
     const key = `mentorings:${date.getDate()}:${date.getHours()}`
     
@@ -45,81 +51,62 @@ async function crawlAsync() {
     
     client.get(key, function (err, res) {
         console.log("=====crawlMentoring res======");
-        // console.log(JSON.parse(res));
+        console.log(JSON.parse(res)[0]);
+        console.log("...");
     })
 };
 
 
-function findLastId() {
-    let lastId = 1;
-    let date = new Date();
+// 1분마다 크롤링 
+// cron.schedule("*/1 * * * *", async () => {
+//     console.log("running a task every 1 minute");
+//     await crawlAsync();
+//     // const lastId = await findLastId();
     
-
-    return lastId;
-}
-
-// 1분마다 크롤링
-cron.schedule("*/1 * * * *", async () => {
-    console.log("running a task every 15 minutes");
-    await crawlAsync();
-    // const lastId = await findLastId();
-    
-});
+// });
 
 
 // 1시간마다(매시 02분에) 전송
+// 이 때 lastId 값 갱신
+
+// 테스트 용으로 1분마다 실행
+// 오류가 난다면 그 전 시간대의 데이터가 없을 확률 매우 높습니다.
+// 미리 크롤링한 데이터만 있으면 가능!
+// 아래 cron job 주석 처리 해두고 위에 크롤링먼저 돌려두면 될 확률 up!
+
+
+// TODO: 실제 구름 환경에서 아래 주석 해제
 // cron.schedule("* 2 * * * *", async () => {
 cron.schedule("*/1 * * * *", async () => {
     console.log("02분 -> 메세지 전송");
-    let date = new Date();
-    console.log("find last ID")
     
-    let last_id;
-    let prev = new Date();
+    client.get('last_id', function(err, res){
+        let lastId = res * 1;
+        let date = new Date();
+        // date.setHours(date.getHours() - 1); // TODO: 실 서비스 시 주석 해제
+        const currentKey = `mentorings:${date.getDate()}:${date.getHours()}`;
 
-    // TODO : -2 가 맞음!!
-    prev.setHours(prev.getHours() - 1);
-    // lastId check
-    const prevKey = `mentorings:${prev.getDate()}:${prev.getHours()}`;
-    
-    client.get(prevKey, function (err, res) {
-        let prevMentoringList = JSON.parse(res);
-        if (prevMentoringList) {
-            lastId = prevMentoringList[0]["id"];
-            console.log(`last id func ${lastId}`)
-        } else {
-            console.log("prevMentoringList null");
-        }
+        client.get(currentKey, function (err, res) {
+            let mentoringList = JSON.parse(res);
+            
+            if (mentoringList && mentoringList[0]["id"] * 1 != lastId) {
+                // 새로 올라온 멘토링 존재
+                console.log("=======new mentorings!========")
+                // TODO: kakaowork api 사용하여 알림톡 전송
+
+                // 인터페이스쪽에서 진행해주시면 될 것 같습니다...!
+
+                // 알림톡 전송 끝
+                console.log(`last id is ${mentoringList[0]["id"] * 1}`)
+                client.set('last_id', mentoringList[0]["id"] * 1)
+            } else {
+                console.log("=======No new mentorings========")
+                // 새로운 멘토링 없음. 알림톡 X
+            }
+        });
     })
     
-    // 비동기여서?
-    console.log(`lastID ${lastId}`);
     
-    const currentKey = `mentorings:${date.getDate()}:${date.getHours() - 1}`;
-
-    client.get(currentKey, function(err, res){
-        let mentoringList = JSON.parse(res);
-        // console.log(mentoringList[0]);
-        
-        if (mentoringList[0]["id"]*1 != lastId){
-            console.log("=======new mentorings!========")
-            // 새로 올라온 멘토링 존재
-            
-            // TODO: 알림톡 전송
-            // kakaowork api 사용
-            
-            // 인터페이스쪽한테 ???
-            // 라우트도 굳이??
-            
-
-
-        } else {
-            console.log("=======No new mentorings========")
-            // 새로운 멘토링 없음. 알림톡 X
-        }
-    });
-    
-    // 
 });
 
 
