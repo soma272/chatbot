@@ -12,7 +12,8 @@ const boardTitle = [];
 
 exports.crawlMentoring = async function () {
     try {
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+
         const page = await browser.newPage();
         await page.goto("https://swmaestro.org/sw/mypage/mentoLec/list.do?menuNo=200046",
             await page.on('dialog', async dialog => {
@@ -65,15 +66,21 @@ exports.crawlMentoring = async function () {
 
             /* 게시글 크롤링 후 map에 저장 */
             const getBoardTbody = $("tbody").find('tr').each(function (i, trElement) {
-                let map = new Map();
+                let map = {};
                 $(this).find('td').each(function (j, tdElement) {
-                    if (j == 1) {           // [제목] a태그만 필요한 정보를 담고 있음
-                        map.set(boardTitle[j], $(this).find('a').text().trim());
-                    } else if (j == 2) {    // [접수 기간] test 값이 다른 형식으로 입력되어있음
-                        map.set(boardTitle[j], $(this).text().replace(/\s/gi, ""));
-                    } else {
-                        map.set(boardTitle[j], $(this).text().trim());
-                    }
+                    
+                    if (j == 0) {
+                        map['id'] = $(this).text().trim();
+                    } else if (j == 1) {           // [제목] a태그만 필요한 정보를 담고 있음
+                        map['title'] = $(this).find('a').text().trim();
+                    } else if (j == 3) {    
+                        map['date'] = $(this).text().trim();
+                    } else if (j == 4) {    
+                        map['limit'] = $(this).text().trim();
+                    } else if (j == 6) {    
+                        map['mentor'] = $(this).text().trim();
+                        
+                    } 
                 })
                 boards[(pageIndex - 1) * 10 + i] = map;
             });
@@ -92,7 +99,27 @@ exports.crawlMentoring = async function () {
         }
 
         await browser.close();
-
+		
+		/*test_crawl의 결과
+		//레지스 값으로 불러올 last_id
+		last_id=450;
+		//last_id보다 큰 id 값 세기위한 count
+		let count=0;
+		
+		for (let board of boards) {
+			 let id=(Object.values(board))[0];
+			 //현재 id가 레지스 last_id 보다 작거나 같으면 loop 나감
+			 if(id<=last_id){
+				break;
+				}
+			//현재 id가 크다면 count 1증가
+			count+=1;
+		}
+		
+		//레지스에 저장된 last_id기준으로 큰 멘토링 글만 리턴
+        return boards.splice(0,count);
+		*/
+		
         return boards;
 
     } catch (error) {
