@@ -68,7 +68,9 @@ exports.crawlMentoring = async function () {
             const getBoardTbody = $("tbody").find('tr').each(function (i, trElement) {
                 let map = {};
                 $(this).find('td').each(function (j, tdElement) {
-                    
+                    // 0, 1, 3, 4, 6
+                    // id, 제목, 날짜, 인원, 작성자
+
                     if (j == 0) {
                         map['id'] = $(this).text().trim();
                     } else if (j == 1) {           // [제목] a태그만 필요한 정보를 담고 있음
@@ -79,9 +81,10 @@ exports.crawlMentoring = async function () {
                         map['limit'] = $(this).text().trim();
                     } else if (j == 6) {    
                         map['mentor'] = $(this).text().trim();
-                        
+
                     } 
                 })
+                
                 boards[(pageIndex - 1) * 10 + i] = map;
             });
 
@@ -129,3 +132,4 @@ exports.crawlMentoring = async function () {
 }
 
 // module.exports = crawl;
+
