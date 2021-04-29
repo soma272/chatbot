@@ -6,10 +6,12 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
 const index = require('./routes/index');
+const libKakaoWork = require('./libs/kakaoWork');
 
 const redis = require("redis");
 const client = redis.createClient(6379, "127.0.0.1");
 
+const crawl = require("./crawl");
 const { crawlMentoring } = require("./crawl.js");
 
 const cron = require("node-cron");
@@ -58,10 +60,10 @@ async function crawlAsync() {
 
 
 // 1분마다 크롤링 
-// cron.schedule("*/1 * * * *", async () => {
-//     console.log("running a task every 1 minute");
-//     await crawlAsync();    
-// });
+ cron.schedule("*/10 * * * *", async () => {
+     console.log("running a task every 1 minute");
+     await crawlAsync();    
+ });
 
 
 // 1시간마다(매시 02분에) 전송
@@ -76,37 +78,57 @@ async function crawlAsync() {
 // TODO: 실제 구름 환경에서 아래 주석 해제
 // cron.schedule("* 2 * * * *", async () => {
 cron.schedule("*/1 * * * *", async () => {
+	if (!crawl.isActivate) {
+		console.log('not activate');
+		return;
+	}
     console.log("02분 -> 메세지 전송");
     
     client.get('last_id', function(err, res){
-        let lastId = res * 1;
-        console.log(lastId)
+        let lastId = Number(res);
 
         let date = new Date();
         // date.setHours(date.getHours() - 1); // TODO: 실 서비스 시 주석 해제
         const currentKey = `mentorings:${date.getDate()}:${date.getHours()}`;
 
-        client.get(currentKey, function (err, res) {
+        client.get(currentKey, async function (err, res) {
             let mentoringList = JSON.parse(res);
-            console.log(mentoringList)
-            if (mentoringList && mentoringList[0]["id"] * 1 != lastId) {
-                // 새로 올라온 멘토링 존재
-                console.log("=======new mentorings!========")
-                // TODO: kakaowork api 사용하여 알림톡 전송
+            if (mentoringList && Number(mentoringList[0].id) != lastId) {
+				const newMentorings = mentoringList.filter(e => Number(e.id) < lastId);
+				
+				const users = await libKakaoWork.getUserList();
+				const conversations = await Promise.all(
+					users.map((user) => libKakaoWork.openConversations({ userId: user.id }))
+				);
+				
+				const convertedTalk = newMentorings.map(mentoring => {
+					const d = new Date(mentoring.date * 1000);
+					return ([
+						{ type: 'text', text: `${mentoring.mentor} 멘토님` , markdown: true},
+						{ type: 'text', text: mentoring.title , markdown: true},
+						{ type: 'text', text: `신청기한 : ${d.getMonth() + 1}월 ${d.getDate()}일까지`, markdown:true},
+						{ type: 'text', text: `접수인원 : ${mentoring.limit}`, markdown: true},
+						{ type: 'divider'}
+					]);
+				}).reduce((acc, cur) => [...acc, ...cur]);
+				
+				await Promise.all([
+					conversations.map((conversation) => {
+						libKakaoWork.sendMessage({
+							conversationId: conversation.id,
+							text: '알리미',
+							blocks: convertedTalk
+						});
+					})
+				]);
 
-                // 인터페이스쪽에서 진행해주시면 될 것 같습니다...!
-
-                // 알림톡 전송 끝
-                console.log(`last id is ${mentoringList[0]["id"] * 1}`)
+				console.log(`${new Date().toLocaleString()} - has ${newMentorings.length} and last id : ${mentoringList[0].id}`);
                 client.set('last_id', mentoringList[0]["id"] * 1)
             } else {
-                console.log("=======No new mentorings========")
-                // 새로운 멘토링 없음. 알림톡 X
+                console.log(`${new Date().toLocaleString()} - has no mentoring`);
             }
         });
     })
-    
-    
 });
 
 
