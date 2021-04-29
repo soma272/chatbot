@@ -8,6 +8,12 @@ const crawl = require('../crawl.js');
 const { crawlMentoring } = require("../crawl.js");
 
 let timer = null;
+router.get('/', async(req, res, next) => {
+	const users = await libKakaoWork.getUserList();
+	res.json({
+		users
+	});
+});
 
 router.get('/chatbot', async (req, res, next) => {
 	if (crawl.isActivate) {
