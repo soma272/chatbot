@@ -21,7 +21,7 @@
 - 신청 기한 
 - 현재까지 접수 인원
 
-<img src="images/messages_example.png" alt="image-20210429201805762" style="zoom:50%;" />
+<img src="images/messages_example.PNG" alt="" style="zoom:50%;" />
 
 
 
