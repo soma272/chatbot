@@ -77,7 +77,7 @@ async function crawlAsync() {
 
 // TODO: 실제 구름 환경에서 아래 주석 해제
 // cron.schedule("* 2 * * * *", async () => {
-cron.schedule("*/1 * * * *", async () => {
+cron.schedule("* 2 * * * *", async () => {
 	if (!crawl.isActivate) {
 		console.log('not activate');
 		return;
@@ -94,7 +94,7 @@ cron.schedule("*/1 * * * *", async () => {
         client.get(currentKey, async function (err, res) {
             let mentoringList = JSON.parse(res);
             if (mentoringList && Number(mentoringList[0].id) != lastId) {
-				const newMentorings = mentoringList.filter(e => Number(e.id) < lastId);
+				const newMentorings = mentoringList.filter(e => Number(e.id) > lastId);
 				
 				const users = await libKakaoWork.getUserList();
 				const conversations = await Promise.all(
@@ -121,11 +121,8 @@ cron.schedule("*/1 * * * *", async () => {
 						});
 					})
 				]);
-
-				console.log(`${new Date().toLocaleString()} - has ${newMentorings.length} and last id : ${mentoringList[0].id}`);
                 client.set('last_id', mentoringList[0]["id"] * 1)
             } else {
-                console.log(`${new Date().toLocaleString()} - has no mentoring`);
             }
         });
     })
