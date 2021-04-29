@@ -9,7 +9,7 @@ const { crawlMentoring } = require("../crawl.js");
 
 let timer = null;
 
-router.get('/', async (req, res, next) => {
+router.get('/chatbot', async (req, res, next) => {
 	if (crawl.isActivate) {
 		res.json({
 			message: '이미 활성화 되었습니다.'
