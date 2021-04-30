@@ -33,7 +33,7 @@ router.get('/chatbot', async (req, res, next) => {
 		conversations.map((conversation) => {
 			libKakaoWork.sendMessage({
 				conversationId: conversation.id,
-				text: '활성화 알림',
+				text: '이칠이조(27조) 멘토링 알리미',
 				blocks: [
 					{ 
 						type: 'header',

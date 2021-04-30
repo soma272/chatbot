@@ -13,11 +13,14 @@ const kakaoInstance = axios.create({
 exports.getUserList = async () => {
 	let retval = [];
     let res = await kakaoInstance.get('/v1/users.list?limit=100');
-	while (res.data.users.length !== 0) {
+	while (res.data.cursor != null) {
 		retval = [...retval, ...res.data.users];
 		console.log(res.data.cursor);
         res = await kakaoInstance.get(`/v1/users.list?cursor=${res.data.cursor}`);
+		console.log(res.data.cursor);
 	}
+	retval = [...retval, ...res.data.users];
+	console.log(retval.length);
     return retval;
 };
 

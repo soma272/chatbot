@@ -104,6 +104,7 @@ cron.schedule("* 2 * * * *", async () => {
 				const convertedTalk = newMentorings.map(mentoring => {
 					const d = new Date(mentoring.date * 1000);
 					return ([
+						{ type: 'header', 'text': "소마 27팀 챗봇", style: 'blue'},
 						{ type: 'text', text: `${mentoring.mentor} 멘토님` , markdown: true},
 						{ type: 'text', text: mentoring.title , markdown: true},
 						{ type: 'text', text: `신청기한 : ${d.getMonth() + 1}월 ${d.getDate()}일까지`, markdown:true},
@@ -116,7 +117,7 @@ cron.schedule("* 2 * * * *", async () => {
 					conversations.map((conversation) => {
 						libKakaoWork.sendMessage({
 							conversationId: conversation.id,
-							text: '알리미',
+							text: `멘토링 알림 - 총 ${newMentorings.length}의 알림이 있습니다`,
 							blocks: convertedTalk
 						});
 					})
